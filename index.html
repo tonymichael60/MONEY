@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Money · First-hour momentum</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f5f7; --surface-1: #fcfcfb; --border: #e3e2de;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #7a7974;
+  --series-1: #2a78d6; --accent: #1c5cab; --accent-ink: #ffffff;
+  --good: #0ca30c; --good-text: #006300; --critical: #d03b3b; --critical-text: #b42323;
+  --warning: #fab219; --grid: #ecebe7; --level: #8a8984;
+  --chip: #eef3fb;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #111110; --surface-1: #1a1a19; --border: #2e2e2b;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+    --series-1: #3987e5; --accent: #3987e5; --accent-ink: #ffffff;
+    --good: #0ca30c; --good-text: #3ec43e; --critical: #d03b3b; --critical-text: #ef6b6b;
+    --grid: #262624; --level: #9a998f; --chip: #1f2a3a;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text-primary); }
+header { display: flex; align-items: center; gap: 16px; padding: 14px 24px; background: var(--surface-1); border-bottom: 1px solid var(--border); }
+.brand { font-weight: 800; font-size: 20px; letter-spacing: .08em; color: var(--accent); }
+.brand small { display: block; font-weight: 500; letter-spacing: 0; font-size: 12px; color: var(--text-secondary); }
+.status { margin-left: auto; text-align: right; font-size: 13px; color: var(--text-secondary); }
+.status b { color: var(--text-primary); }
+nav { display: flex; gap: 4px; padding: 0 24px; background: var(--surface-1); border-bottom: 1px solid var(--border); }
+nav button { border: 0; background: none; padding: 10px 14px; font: inherit; color: var(--text-secondary); border-bottom: 2px solid transparent; cursor: pointer; }
+nav button.on { color: var(--text-primary); border-color: var(--accent); font-weight: 600; }
+main { max-width: 1180px; margin: 0 auto; padding: 18px 24px 40px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 16px; }
+.controls label { display: flex; flex-direction: column; font-size: 12px; color: var(--text-secondary); gap: 3px; }
+select, input { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-1); color: var(--text-primary); }
+input[type=number] { width: 100px; }
+.btn { font: inherit; font-weight: 600; padding: 7px 16px; border-radius: 6px; border: 0; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+.btn:disabled { opacity: .5; cursor: default; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; }
+.card h2 { margin: 0 0 10px; font-size: 15px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.tile { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.tile .k { font-size: 12px; color: var(--text-secondary); }
+.tile .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tile .s { font-size: 12px; color: var(--text-muted); }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-weight: 700; font-size: 13px; border: 1px solid var(--border); }
+.pos { color: var(--good-text); } .neg { color: var(--critical-text); }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); font-size: 13px; }
+th { color: var(--text-secondary); font-weight: 600; font-size: 12px; }
+td.n, th.n { text-align: right; }
+tr.pickrow td { background: var(--chip); }
+.muted { color: var(--text-muted); }
+.why { color: var(--text-secondary); font-size: 12px; }
+.plan { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 10px 0; }
+.plan div { border-left: 3px solid var(--border); padding: 2px 10px; }
+.plan .k { font-size: 12px; color: var(--text-secondary); }
+.plan .v { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bar { height: 6px; background: var(--grid); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+.note { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+.err { color: var(--critical-text); font-weight: 600; }
+svg text { font: 11px system-ui, sans-serif; fill: var(--text-secondary); }
+.tip { position: fixed; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; padding: 6px 9px; font-size: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 10; font-variant-numeric: tabular-nums; }
+.hidden { display: none; }
+.alertbtn { margin-left: auto; background: var(--surface-1); color: var(--text-primary); border: 1px solid var(--border); font-weight: 600; }
+.alertbtn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.alertbtn + .status { margin-left: 16px; }
+#toasts { position: fixed; top: 74px; right: 18px; display: flex; flex-direction: column; gap: 8px; z-index: 20; max-width: 380px; }
+.toast { background: var(--surface-1); border: 1px solid var(--border); border-left: 5px solid var(--accent); border-radius: 8px; padding: 10px 14px; box-shadow: 0 6px 20px rgba(0,0,0,.18); font-size: 13px; }
+.toast b { display: block; font-size: 14px; margin-bottom: 2px; }
+.toast.good { border-left-color: var(--good); } .toast.bad { border-left-color: var(--critical); } .toast.warn { border-left-color: var(--warning); }
+.toast button { float: right; border: 0; background: none; color: var(--text-muted); cursor: pointer; font-size: 16px; line-height: 1; }
+#watchline { font-size: 12px; color: var(--text-secondary); margin: -6px 0 12px; }
+.derived { font-size: 12px; color: var(--text-secondary); padding: 0 4px 6px; max-width: 360px; }
+.derived b { color: var(--text-primary); }
+.tokenbox { max-width: 1180px; margin: 10px auto 0; padding: 0 24px; font-size: 13px; }
+details summary { cursor: pointer; color: var(--text-secondary); font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Money<small>First-hour momentum · NSE intraday · paper trading</small></div>
+  <button class="btn alertbtn" id="alertbtn" title="Notifications and sound for the day's pick">🔔 Alerts off</button>
+  <div class="status" id="status">Loading market status…</div>
+</header>
+<div id="toasts"></div>
+<nav>
+  <button class="on" data-tab="today">Today's pick</button>
+  <button data-tab="calc">Trade calculator</button>
+  <button data-tab="backtest">Accuracy &amp; backtest</button>
+  <button data-tab="how">How it works</button>
+</nav>
+<details class="tokenbox" id="tokenbox"><summary>⚙ Upstox token (optional: live tick price for alerts)</summary>
+  <div class="row" style="gap:8px;align-items:center;margin-top:8px">
+    <input type="password" id="tokin" placeholder="Paste your Upstox Analytics Token" autocomplete="off" style="flex:1;min-width:240px">
+    <button class="btn" id="toksave">Save</button><button class="btn" id="tokdel">Remove</button>
+  </div>
+  <div id="tokmsg" class="derived" style="max-width:none;padding-top:6px"></div>
+  <div class="derived" style="max-width:none">Saved only on this Mac (settings.json in the Money folder). Read-only: it can't place orders. Candles work without it.</div>
+</details>
+<main>
+  <div class="controls">
+    <label>Stock list<select id="list"><option value="nifty50">NIFTY 50</option><option value="nifty100" selected>NIFTY 100</option><option value="nifty200">NIFTY 200</option><option value="nifty500">NIFTY 500 (slow)</option><option value="fno">F&amp;O stocks (~218)</option></select></label>
+    <label>Strategy<select id="strategy"><option value="firsthour" selected>First hour (9:15–10:15)</option><option value="hour">Hour trend (11:15–12:15, tested)</option><option value="hournow">Hour trend: up to now (latest hour)</option></select></label>
+    <label id="hourendbox" class="hidden">Hour ending (blank = now)<input type="time" id="hourend" step="300" min="10:15" max="14:15" style="width:110px"></label>
+    <label>Mode<select id="mode"><option value="standard" selected>Standard</option><option value="high">High accuracy (fewer trades)</option><option value="original">Original rules</option></select></label>
+    <label>Budget ₹<input type="number" id="budget" value="50000" step="1000"></label>
+    <label>Move measured<select id="basis"><option value="prev_close" selected>From yesterday's close (tested)</option><option value="open">Within the first hour, 9:15–10:15</option></select></label>
+    <label>Move %<span style="display:flex;gap:4px;align-items:center"><input type="number" id="mmin" value="1" step="0.25" min="0.25" style="width:62px"> to <input type="number" id="mmax" value="2" step="0.25" min="0.5" style="width:62px"></span></label>
+    <label>Desired profit / trade ₹<input type="number" id="profit" value="1000" step="100" min="100"></label>
+    <label>Risk : Reward<select id="rr"><option value="1">1 : 1</option><option value="1.5">1 : 1.5</option><option value="2" selected>1 : 2</option><option value="2.5">1 : 2.5</option><option value="3">1 : 3</option></select></label>
+    <div class="derived" id="derived"></div>
+  </div>
+
+  <section id="tab-today">
+    <div class="controls">
+      <label>Date (blank = today)<input type="date" id="date"></label>
+      <button class="btn" id="go">Analyse</button>
+      <span class="muted" id="hint"></span>
+    </div>
+    <div id="watchline"></div>
+    <div id="prog" class="card hidden"><div id="progmsg">Starting…</div><div class="bar"><i id="progbar"></i></div></div>
+    <div id="today"></div>
+  </section>
+
+  <section id="tab-calc" class="hidden">
+    <div class="controls">
+      <label>NSE stock<input type="text" id="csym" placeholder="e.g. RELIANCE" style="width:150px;text-transform:uppercase"></label>
+      <label>Side<select id="cside"><option value="auto" selected>Auto (from the first hour)</option><option value="buy">Buy</option><option value="sell">Short sell</option></select></label>
+      <label>Date (blank = today)<input type="date" id="cdate"></label>
+      <button class="btn" id="cgo">Calculate</button>
+    </div>
+    <div class="muted" style="margin:-6px 0 12px">Uses your desired profit and risk : reward above. Levels come from the stock's first hour, so they are ready after 10:15 AM IST.</div>
+    <div id="calcout"></div>
+  </section>
+
+  <section id="tab-backtest" class="hidden">
+    <div class="controls">
+      <label>Period<select id="period"><option value="year" selected>12 months (1-hour bars)</option><option value="60d">40 days (5-minute bars)</option></select></label>
+      <button class="btn" id="bt">Run backtest</button>
+      <span class="muted">First run downloads the data (about a minute for NIFTY 100).</span>
+    </div>
+    <div id="prog2" class="card hidden"><div id="progmsg2">Starting…</div><div class="bar"><i id="progbar2"></i></div></div>
+    <div id="btout"></div>
+  </section>
+
+  <section id="tab-how" class="hidden">
+    <div class="card">
+      <h2>The method</h2>
+      <ol>
+        <li><b>9:15 to 10:15 IST: read the market.</b> NIFTY 50 against yesterday's close and its own open, how many stocks are up and down, and India VIX. NIFTY up 0.25% or more: <b>bullish</b>, buys only. Down 0.25% or more: <b>bearish</b>, short sells only. In between: <b>neutral, no trade</b> (in 12 months of testing, neutral days lost money).</li>
+        <li><b>10:15: shortlist</b> stocks up (buy) or down (short) 1% to 2% from yesterday's close (the default, tested). Setting <b>Move measured → Within the first hour</b> uses your rule instead: stocks that moved 1.5% to 2% between 9:15 and 10:15, with NIFTY judged on its own first hour. In testing that rule lost money (12 months: 61 trades, 45.9% wins, −₹1,387; last 40 days: −₹2,095), so it is an option, not the default.</li>
+        <li><b>Score each chart out of 100</b>: VWAP side (25), close near the first-hour high or low (20), EMA 9 vs EMA 20 (15), volume against its usual first hour (20), stronger or weaker than NIFTY (10), 20-day trend (10). Standard mode needs 70+, high-accuracy 80+.</li>
+        <li><b>Entry</b>: the first 5-minute candle that closes beyond the first-hour high (buy) or low (short), by 2:30 PM.</li>
+        <li><b>Stop</b>: the first-hour midpoint, on the NSE tick. <b>Target</b>: by your risk : reward (1 : 2 by default, 2× the risk). Once the trade is 1R up, the stop moves to the entry (no loss after that).</li>
+        <li><b>Exit</b>: target, stop, or 3:10 PM, whichever comes first. Every trade closes the same day (intraday, MIS).</li>
+      </ol>
+      <h2>Your profit goal, the stop-loss and the target</h2>
+      <p>You set the <b>desired profit per trade</b> and the <b>risk : reward</b> ratio (1 : 2 by default). Money fetches the stop-loss from the chart (the first-hour midpoint), sets the target at 2× the risk (for 1 : 2) away from the entry, and works out the quantity that makes your desired profit at the target. The most you can lose at the stop is the desired profit ÷ 2 (₹1,000 at 1 : 2 risks ₹500). The Trade calculator tab does the same for any NSE stock you type.</p>
+      <h2>Alerts</h2>
+      <h3>Hour trend (Strategy → Hour trend)</h3>
+      <p>A second trade after the first hour. At <b>12:15 PM</b> Money reads the <b>11:15 AM to 12:15 PM</b> hour: NIFTY must be at least ±0.25% on yesterday <b>and</b> have moved the same way during that hour (up: buys only, down: short sells only, otherwise no trade). It shortlists stocks 1% to 3% on yesterday whose 11:15–12:15 hour also moved that way, needs a chart score of 80+, and picks the best. Entry on a 5-minute close beyond that hour's high (buy) or low (short), stop at the hour's midpoint, target 1:2, stop to entry at +1R, out by 3:10 PM. Tested: 12 months of 1-hour bars, 63 trades, 54% wins, profit factor 1.97, +₹3,671 (profitable in both the tuning months and the 4 unseen months); last 40 days on 5-minute bars, 20 trades, 65% wins, +₹2,486. The 10:15–11:15 and 12:15–1:15 hours did not hold up, so Money uses only 11:15–12:15. It can run on the same day as the first-hour trade (both together over 12 months: +₹10,226).</p>
+      <p>Click <b>🔔 Alerts</b> (top right) and allow notifications. While the Money page stays open on a trading day it watches by itself: a notice at 9:10, the pick (or "no trade") after 10:15, <b>ENTRY</b> with the quantity, stop-loss and target to place, <b>+1R</b> (move the stop to the entry), <b>TARGET HIT</b> or <b>STOP HIT</b>, "no entry" at 2:30 PM and <b>CLOSE NOW</b> at 3:05 PM. Each alert comes once, with a sound, a banner and a Mac notification. Prices are free Yahoo data, a few minutes delayed: your Zerodha orders are what actually protect you.</p>
+      <h2>Size and charges</h2>
+      <p>Shares = the smallest of: (desired profit ÷ reward multiple) ÷ risk per share, 75% of the budget, and the budget less a 10% cash buffer. Charges are Zerodha's equity intraday charges: brokerage ₹20 or 0.03% per order, STT 0.025% on the sell, exchange and SEBI fees, stamp duty and GST.</p>
+      <h2>Honest limits</h2>
+      <p>Free Yahoo Finance data: delayed by a few minutes and unofficial. 5-minute data covers the last 60 days; the 12-month test uses 1-hour bars, which delay the entry by up to an hour. Results on the past are not a promise. Most people who day trade lose money. Money never places orders: paper-trade first. Not financial advice.</p>
+    </div>
+  </section>
+</main>
+<div class="tip" id="tip"></div>
+<script>
+const $ = s => document.querySelector(s);
+const rupee = (x, sign) => (x < 0 ? "−" : (sign && x > 0 ? "+" : "")) + "₹" + Math.abs(x).toLocaleString("en-IN", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const pct = x => (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(2) + "%";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const tip = $("#tip");
+function showTip(e, html) { tip.innerHTML = html; tip.style.display = "block"; const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8); tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px"; }
+function hideTip() { tip.style.display = "none"; }
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  ["today", "calc", "backtest", "how"].forEach(t => $("#tab-" + t).classList.toggle("hidden", t !== b.dataset.tab));
+});
+
+async function status() {
+  try {
+    const s = await (await fetch("/api/status")).json();
+    $("#status").innerHTML = `IST <b>${esc(s.now)}</b> · NSE <b>${esc(s.phase)}</b><br>Next session ${esc(s.next_session)}<br>` +
+      `Data <a href="#" id="srcbtn" title="Click to switch the data source">${s.source === "upstox" ? "Upstox API (live, free)" : "Yahoo (1–5 min delay)"}</a>`;
+    $("#srcbtn").onclick = async ev => {
+      ev.preventDefault();
+      const to = s.source === "upstox" ? "yahoo" : "upstox";
+      await fetch("/api/source?set=" + to);
+      if (to === "upstox") {
+        const t = await (await fetch("/api/source/test")).json();
+        toast(t.ok ? `Upstox connected · NIFTY ${t.day} last bar ${t.last} (${t.ms} ms)` : "Upstox not reachable, using Yahoo for now: " + t.error);
+      } else toast("Switched to Yahoo data (delayed 1–5 min).");
+      status();
+    };
+    $("#hint").textContent = s.first_hour_done ? "First hour is complete: analyse today, or pick a past date (last 60 days)." :
+      "Today's first hour is not complete. Pick a past date to replay, or come back after 10:15 AM IST.";
+  } catch (e) { $("#status").textContent = "Money server not reachable"; }
+}
+status(); setInterval(status, 60000);
+
+function tokShow(t) {
+  $("#tokmsg").innerHTML = !t.set ? "No token saved: candles from Upstox's free API, last price from the latest 5-minute candle." :
+    t.ok ? `✓ Token works · NIFTY 50 live ${rupee(t.nifty)}` : "✗ Token saved but Upstox rejected it: generate a new one and paste it again.";
+}
+fetch("/api/token").then(r => r.json()).then(tokShow).catch(() => {});
+$("#toksave").onclick = async () => {
+  const token = $("#tokin").value.trim(); if (!token) return;
+  const t = await (await fetch("/api/token", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({token})})).json();
+  $("#tokin").value = ""; tokShow(t);
+};
+$("#tokdel").onclick = async () => {
+  tokShow(await (await fetch("/api/token", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"})).json());
+};
+
+function derived() {
+  const g = +$("#profit").value || 0, rr = +$("#rr").value || 2;
+  $("#derived").innerHTML = `Risk ₹1 to make ₹${rr} · max loss per trade <b>${rupee(g / rr)}</b><br>Quantity, stop-loss and target are set for you to make about <b>${rupee(g)}</b>`;
+}
+["#profit", "#rr"].forEach(s => $(s).addEventListener("input", derived)); derived();
+$("#basis").addEventListener("change", () => {
+  if ($("#basis").value === "open") { $("#mmin").value = 1.5; $("#mmax").value = 2;
+    toast("First-hour-only rule", "Stocks that moved 1.5–2% from 9:15 to 10:15. In testing this lost money (12 months −₹1,387; last 40 days −₹2,095). Paper-trade it before trusting it.", "warn"); }
+  else { $("#mmin").value = 1; $("#mmax").value = 2; }
+});
+function qs(extra) {
+  const p = new URLSearchParams({list: $("#list").value, mode: $("#mode").value, budget: $("#budget").value, profit: $("#profit").value, rr: $("#rr").value,
+    strategy: $("#strategy").value, hour_end: $("#hourend").value || "now", basis: $("#basis").value, min_move: $("#mmin").value, max_move: $("#mmax").value, ...extra});
+  return p.toString();
+}
+async function runJob(kind, extra, progId, barId, msgId) {
+  const r = await fetch(`/api/${kind}?` + qs(extra));
+  if (r.status === 409) throw new Error("Another job is running: wait for it to finish.");
+  $(progId).classList.remove("hidden");
+  for (;;) {
+    await new Promise(r => setTimeout(r, 700));
+    const j = await (await fetch("/api/job")).json();
+    $(msgId).textContent = j.msg || "Working…";
+    $(barId).style.width = (j.total ? 100 * j.done / j.total : 5) + "%";
+    if (j.state === "done") { $(progId).classList.add("hidden"); return j.result; }
+    if (j.state === "error") { $(progId).classList.add("hidden"); throw new Error(j.error); }
+  }
+}
+
+$("#go").onclick = async () => {
+  $("#go").disabled = true; $("#today").innerHTML = "";
+  try {
+    const d = $("#date").value;
+    const res = await runJob("analyse", d ? {date: d} : {}, "#prog", "#progbar", "#progmsg");
+    renderToday(res);
+  } catch (e) { $("#today").innerHTML = `<div class="card err">${esc(e.message)}</div>`; }
+  $("#go").disabled = false;
+};
+$("#cgo").onclick = async () => {
+  const sym = $("#csym").value.trim();
+  if (!sym) { $("#calcout").innerHTML = `<div class="card err">Type an NSE stock symbol, e.g. RELIANCE.</div>`; return; }
+  $("#cgo").disabled = true; $("#calcout").innerHTML = `<div class="card">Fetching ${esc(sym.toUpperCase())}…</div>`;
+  try {
+    const r = await fetch("/api/calc?" + qs({symbol: sym, side: $("#cside").value, ...($("#cdate").value ? {date: $("#cdate").value} : {})}));
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    renderCalc(j);
+  } catch (e) { $("#calcout").innerHTML = `<div class="card err">${esc(e.message)}</div>`; }
+  $("#cgo").disabled = false;
+};
+$("#csym").addEventListener("keydown", e => { if (e.key === "Enter") $("#cgo").click(); });
+function renderCalc(c) {
+  const buy = c.side === "buy", p = c.params;
+  let h = `<div class="card"><h2>${buy ? "BUY" : "SHORT SELL"} ${esc(c.symbol)} · ${esc(c.date)}</h2>
+    ${c.note ? `<div class="note">${esc(c.note)}</div>` : ""}
+    <div class="why">Side: ${esc(c.side_from)} · first hour ${rupee(c.fh_low)} to ${rupee(c.fh_high)} · last ${rupee(c.last)} · chart score ${c.score}/100</div>
+    <div class="plan">
+      <div><div class="k">Quantity</div><div class="v">${c.qty} shares</div><div class="why">${rupee(c.qty * c.entry)} at ${rupee(c.entry)}</div></div>
+      <div><div class="k">Entry ${c.entered ? "(triggered " + esc(c.entry_time) + ")" : "trigger"}</div><div class="v">${rupee(c.entered ? c.entry : c.trigger)}</div><div class="why">${c.entered ? "first 5-min close beyond the level" : "when a 5-min candle closes " + (buy ? "above" : "below")}</div></div>
+      <div><div class="k">Stop-loss</div><div class="v neg">${rupee(c.stop)}</div><div class="why">first-hour midpoint · ${rupee(c.risk_per_share)} a share</div></div>
+      <div><div class="k">Target (1 : ${p.r})</div><div class="v pos">${rupee(c.target)}</div><div class="why">${p.r}× the risk · or out by 3:10 PM</div></div>
+      <div><div class="k">Profit at target</div><div class="v pos">${rupee(c.profit_at_target, true)}</div><div class="why">desired ${rupee(p.profit_goal)} · charges about ${rupee(c.charges)}</div></div>
+      <div><div class="k">Loss at stop</div><div class="v neg">${rupee(-c.loss_at_stop)}</div><div class="why">desired profit ÷ ${p.r}</div></div>
+    </div>
+    ${c.capped ? `<div class="note"><b>Note:</b> ${c.qty_wanted} shares would make your ${rupee(p.profit_goal)}, but your budget (${rupee(p.budget)}: 75% per trade, 10% kept as cash) allows ${c.qty}. Raise the budget or lower the desired profit.</div>` : ""}
+    ${!c.fits_rules ? `<div class="note"><b>Heads up:</b> this stock is not a Money pick today (it needs a ${p.min_move}–${p.max_move}% first-hour move with the market and a score of ${p.min_score}+). The levels are calculated the same way, but the tested edge applies to Money's own picks.</div>` : ""}
+    ${c.outcome && c.outcome.exit ? `<div class="note">What happened: ${esc(c.outcome.exit)} at ${esc(c.outcome.exit_time)}, ${rupee(c.outcome.exit_price)} (${c.outcome.r >= 0 ? "+" : ""}${c.outcome.r}R).</div>` : ""}
+    <div id="cchart"></div>
+    <div class="note">Paper trade. In Zerodha: an intraday (MIS) ${buy ? "buy" : "short sell"} of ${c.qty}, then a stop-loss order at ${rupee(c.stop)} and a target (limit) order at ${rupee(c.target)}; cancel the other when one fills.</div></div>`;
+  $("#calcout").innerHTML = h;
+  if (c.bars.length) priceChart($("#cchart"), {symbol: c.symbol, bars: c.bars, plan: {trigger: c.trigger, stop: c.stop, target: c.target}, win: winOf(c.window || 0),
+    outcome: c.entered ? {entered: true, entry: c.entry, entry_time: c.entry_time, stop: c.stop, target: c.target,
+      exit_price: c.outcome.exit_price, exit_time: c.outcome.exit_time} : {entered: false}});
+}
+/* ---------------- alerts: browser notifications + sound + banner, while Money is open ---------------- */
+const AL = {on: false, ctx: null, timer: null, busy: false, day: null, pick: null, neutral: false};
+const store = {get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+               set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }};
+function beep(kind) {
+  try {
+    const c = AL.ctx || (AL.ctx = new (window.AudioContext || window.webkitAudioContext)());
+    const notes = kind === "good" ? [660, 880] : kind === "bad" ? [440, 300] : [600, 600];
+    notes.forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(); o.frequency.value = f; o.connect(g); g.connect(c.destination);
+      const t = c.currentTime + i * 0.22; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2); o.start(t); o.stop(t + 0.21); });
+  } catch (e) {}
+}
+function toast(title, body, kind) {
+  const d = document.createElement("div"); d.className = "toast " + (kind || "");
+  d.innerHTML = `<button aria-label="Dismiss">×</button><b>${esc(title)}</b>${esc(body)}`;
+  d.querySelector("button").onclick = () => d.remove(); $("#toasts").prepend(d);
+  setTimeout(() => d.remove(), 120000);
+}
+function alertOnce(key, title, body, kind) {
+  key = (isHour() ? "hour-" : "") + key;
+  const day = AL.day || "", fired = store.get("money-fired-" + day) || [];
+  if (fired.includes(key)) return;
+  fired.push(key); store.set("money-fired-" + day, fired);
+  toast(title, body, kind); beep(kind);
+  if ("Notification" in window && Notification.permission === "granted") {
+    try { const n = new Notification("Money · " + title, {body, tag: "money-" + key, requireInteraction: kind !== "warn"}); n.onclick = () => { window.focus(); n.close(); }; } catch (e) {}
+  }
+}
+function setAlertBtn() { $("#alertbtn").classList.toggle("on", AL.on); $("#alertbtn").textContent = AL.on ? "🔔 Alerts on" : "🔕 Alerts off"; }
+$("#alertbtn").onclick = async () => {
+  AL.on = !AL.on; store.set("money-alerts", AL.on); setAlertBtn();
+  if (AL.on) {
+    beep("info");
+    if ("Notification" in window && Notification.permission === "default") { try { await Notification.requestPermission(); } catch (e) {} }
+    if ("Notification" in window && Notification.permission === "denied") toast("Notifications are blocked", "Allow notifications for this page in the browser's site settings. Sound and banners still work while Money is open.", "warn");
+    else toast("Alerts on", "Money watches today's pick while this page stays open: entry, target, stop and the 3:10 PM exit.", "");
+    watch();
+  } else { clearTimeout(AL.timer); $("#watchline").textContent = ""; }
+};
+const hhmm = s => s.slice(11, 16);
+const isHour = () => $("#strategy").value !== "firsthour";
+$("#strategy").addEventListener("change", () => {
+  $("#hourendbox").classList.toggle("hidden", $("#strategy").value !== "hournow");
+  if ($("#strategy").value === "hournow") toast("Hour trend: up to now", "Reads the latest completed hour. Only the 11:15–12:15 hour held up in testing; other hours were mixed or lost money (12 months: hour ending 11:15 −₹3,712, 1:15 −₹111). Paper-trade it.", "warn");
+});
+const addMin = (t, m) => { const [h, mm] = t.split(":").map(Number), x = h * 60 + mm + m; return String(Math.floor(x / 60)).padStart(2, "0") + ":" + String(x % 60).padStart(2, "0"); };
+const winOf = ws => ws ? [addMin("09:15", ws), addMin("09:15", ws + 60)] : ["09:15", "10:15"];
+function line(t) { $("#watchline").textContent = "🔔 " + t; }
+async function watch() {
+  clearTimeout(AL.timer);
+  if (!AL.on) return;
+  try { await watchStep(); } catch (e) { line("Watching… (" + e.message + ")"); }
+  AL.timer = setTimeout(watch, 60000);
+}
+async function watchStep() {
+  const st = await (await fetch("/api/status")).json(), now = hhmm(st.now);
+  const strat = $("#strategy").value;
+  let [ws0, ws1] = winOf(strat === "hour" ? 120 : 0);
+  if (strat === "hournow") { ws1 = AL.ws1 || "10:15"; ws0 = AL.ws0 || "09:15"; }
+  if (AL.day !== st.date || AL.strat !== strat) { AL.day = st.date; AL.strat = strat; AL.pick = null; AL.neutral = false; AL.ws0 = AL.ws1 = null; }
+  if (!st.trading_day) return line(`NSE closed today (${st.phase}). Next session ${st.next_session}.`);
+  if (now < ws1) { if (now >= "09:10") alertOnce("open", "Market opening", `Money reads the ${ws0}–${ws1} hour at ${ws1} IST. Keep Money open.`, ""); return line(`Waiting for the ${ws0}–${ws1} hour. It is ${now} IST.`); }
+  if (now >= "15:30") return line(`Market closed for the day. Next session ${st.next_session}.`);
+  if (AL.neutral) return line(`No trade today: no clear market trend in the ${ws0}–${ws1} hour.`);
+  if (!AL.pick) {
+    if (AL.busy) return;
+    AL.busy = true; line(`Reading the ${ws0}–${ws1} hour…`);
+    try {
+      const res = await runJob("analyse", {}, "#prog", "#progbar", "#progmsg");
+      renderToday(res);
+      if (res.note) { AL.neutral = true; alertOnce("neutral", "No trade today", res.note, "warn"); return line("No trade today: " + res.note); }
+      if (!res.pick) { alertOnce("nopick", "No pick today", `No stock met the rules after the ${ws0}–${ws1} hour.`, "warn"); AL.neutral = true; return; }
+      AL.pick = {symbol: res.pick.symbol, side: res.pick.side, hour_end: winOf(res.window || 0)[1]};
+      [AL.ws0, AL.ws1] = winOf(res.window || 0);
+      const pl = res.pick.plan;
+      alertOnce("pick", `${res.pick.side === "buy" ? "BUY" : "SHORT"} ${res.pick.symbol}: pick ready`, `Wait for a 5-min close ${res.pick.side === "buy" ? "above" : "below"} ${rupee(pl.trigger)}. Stop-loss ${rupee(pl.stop)}. Entry by 2:30 PM.`, "");
+    } catch (e) { line("Could not read the market: " + e.message); return; }
+    finally { AL.busy = false; }
+  }
+  const p = AL.pick;
+  const r = await fetch("/api/calc?" + qs({symbol: p.symbol, side: p.side, hour_end: p.hour_end}));
+  const c = await r.json();
+  if (c.error) return line(c.error);
+  const o = c.outcome || {}, word = p.side === "buy" ? "BUY" : "SHORT";
+  if (o.entered) {
+    alertOnce("entry", `ENTRY: ${word} ${p.symbol} ×${c.qty}`, `Triggered ${o.entry_time} at ${rupee(o.entry)}. Place it now (MIS): stop-loss ${rupee(c.stop)}, target ${rupee(c.target)}. Profit at target ${rupee(c.profit_at_target)}, loss at stop ${rupee(c.loss_at_stop)}.`, "good");
+    if (o.exit === "target") alertOnce("target", `TARGET HIT: ${p.symbol}`, `${rupee(o.exit_price)} at ${o.exit_time}. About ${rupee(c.profit_at_target, true)} before charges. Cancel the stop-loss order.`, "good");
+    else if (o.exit === "stop") alertOnce("stop", `STOP HIT: ${p.symbol}`, `${rupee(o.exit_price)} at ${o.exit_time}. Loss about ${rupee(c.loss_at_stop)}. Cancel the target order. No new trade today.`, "bad");
+    else if (o.exit === "breakeven") alertOnce("be", `OUT AT ENTRY: ${p.symbol}`, `The stop had moved to the entry after +1R. Cancel the target order.`, "warn");
+    else if (o.open) {
+      if (o.r_now >= 1) alertOnce("1r", `${p.symbol} is +1R`, `Move your stop-loss to the entry, ${rupee(o.entry)}: the trade can no longer lose.`, "good");
+      if (now >= "15:05") alertOnce("flat", `CLOSE ${p.symbol} NOW`, `It is ${now}. Exit by 3:10 PM (last ${rupee(o.last_price)}), before Zerodha's auto square-off. Cancel the stop-loss and target orders.`, "bad");
+      return line(`${word} ${p.symbol} open · last ${rupee(o.last_price)} at ${o.last_time} (${o.r_now >= 0 ? "+" : ""}${o.r_now}R) · stop ${rupee(o.stop)} · target ${rupee(c.target)}`);
+    }
+    return line(`${p.symbol}: trade finished (${o.exit || "closed"}). Nothing more today.`);
+  }
+  if (now >= "14:30") { alertOnce("noentry", `No entry: ${p.symbol}`, `No 5-min close beyond ${rupee(c.trigger)} by 2:30 PM. No trade today.`, "warn"); return line(`No entry for ${p.symbol} today.`); }
+  return line(`${word} ${p.symbol}: waiting for a 5-min close ${p.side === "buy" ? "above" : "below"} ${rupee(c.trigger)} · last ${rupee(c.last)} · checking every minute`);
+}
+AL.on = !!store.get("money-alerts"); setAlertBtn(); if (AL.on) watch();
+
+$("#bt").onclick = async () => {
+  $("#bt").disabled = true; $("#btout").innerHTML = "";
+  try { renderBacktest(await runJob("backtest", {period: $("#period").value}, "#prog2", "#progbar2", "#progmsg2")); }
+  catch (e) { $("#btout").innerHTML = `<div class="card err">${esc(e.message)}</div>`; }
+  $("#bt").disabled = false;
+};
+
+function biasPill(b) {
+  const m = {bullish: ["▲", "pos", "Bullish: buys only"], bearish: ["▼", "neg", "Bearish: short sells only"], neutral: ["■", "", "Neutral: no trade"]}[b];
+  return `<span class="pill ${m[1]}">${m[0]} ${m[2]}</span>`;
+}
+
+function renderToday(r) {
+  const m = r.market, pk = r.pick;
+  const [w0, w1] = winOf(r.window || 0);
+  let h = `<div class="card"><h2>${r.window ? "Hour trend · market at " + w1 : "Market after the first hour"} · ${esc(r.date)}${r.live ? " (live)" : " (replay)"}</h2>
+    <div class="tiles">
+      <div class="tile"><div class="k">NIFTY 50</div><div class="v ${m.change_pct >= 0 ? "pos" : "neg"}">${pct(m.change_pct)}</div><div class="s">vs yesterday · ${pct(m.vs_open_pct)} ${r.window ? "in " + w0 + "–" + w1 : "from open"}</div></div>
+      <div class="tile"><div class="k">Breadth (${esc($("#list").selectedOptions[0].text)})</div><div class="v">${m.advancers} ▲ / ${m.decliners} ▼</div><div class="s">stocks up / down</div></div>
+      <div class="tile"><div class="k">India VIX</div><div class="v">${m.vix ?? "–"}</div><div class="s">${m.vix_change_pct != null ? pct(m.vix_change_pct) + " this hour" : ""}</div></div>
+      <div class="tile"><div class="k">Reading</div><div class="v" style="font-size:16px;margin-top:4px">${biasPill(m.bias)}</div></div>
+    </div></div>`;
+  if (r.strategy === "hournow" && !r.tested) h += `<div class="card" style="border-left:3px solid var(--warning)"><b>Not the tested hour.</b> This reads ${w0}–${w1}. Only 11:15–12:15 held up in testing; other hours were mixed or lost money. Treat this as a paper trade.</div>`;
+  if (r.note && r.window) h += `<div class="card"><h2>No trade from this hour</h2>${esc(r.note)}. Hour trend needs NIFTY at least ±0.25% on yesterday <b>and</b> moving the same way from ${w0} to ${w1}.</div>`;
+  else if (r.note) h += `<div class="card"><h2>No trade today</h2>NIFTY was neutral after the first hour (within ±${r.params.neutral_band}% ${r.params.basis === "open" ? "of its 9:15 open" : "of yesterday's close"}). In 12 months of testing, neutral days lost money, so Money sits them out.</div>`;
+  if (pk) {
+    const o = pk.outcome, pl = pk.plan, buy = pk.side === "buy";
+    let status = "";
+    if (!o.entered) status = `<span class="pill">⏳ ${esc(o.reason || "No entry")}</span>`;
+    else if (o.open) status = `<span class="pill ${o.r_now >= 0 ? "pos" : "neg"}">● OPEN · last ${rupee(o.last_price)} at ${esc(o.last_time)} · ${o.r_now >= 0 ? "+" : ""}${o.r_now}R</span>`;
+    else status = `<span class="pill ${o.net >= 0 ? "pos" : "neg"}">${o.net >= 0 ? "✔" : "✖"} ${esc({target: "Target hit", stop: "Stop hit", breakeven: "Out at entry (breakeven)", time: "Time exit 3:10 PM"}[o.exit] || o.exit)} · net ${rupee(o.net, true)}</span>`;
+    h += `<div class="card"><h2>${buy ? "BUY" : "SHORT SELL"} ${esc(pk.symbol)} <span class="muted" style="font-weight:400">${esc(pk.name)} · score ${pk.score}/100</span></h2>
+      <div>${status}</div>
+      <div class="why" style="margin-top:6px">${esc(pk.why.join(" · "))}</div>
+      <div class="plan">
+        <div><div class="k">Entry trigger</div><div class="v">${rupee(pl.trigger)}</div><div class="why">5-min close ${buy ? "above" : "below"}, by ${esc(pl.cutoff)}</div></div>
+        <div><div class="k">Entry</div><div class="v">${o.entered ? rupee(o.entry) : "–"}</div><div class="why">${o.entered ? esc(o.entry_time) + " · " + o.qty + " shares" : "not yet"}</div></div>
+        <div><div class="k">Stop-loss</div><div class="v neg">${rupee(o.entered ? o.stop : pl.stop)}</div><div class="why">first-hour midpoint${pl.trail_be ? "; to entry at +1R" : ""}</div></div>
+        <div><div class="k">Target (1 : ${pl.r})</div><div class="v pos">${rupee(o.entered ? o.target : pl.target)}</div><div class="why">${o.entered ? "" : "expected, if entry fills at " + rupee(pl.trigger) + " · "}or out by ${esc(pl.flat_by)}</div></div>
+        <div><div class="k">Profit at target</div><div class="v pos">${o.entered ? rupee(o.qty * Math.abs(o.target - o.entry), true) : rupee(r.params.profit_goal, true)}</div><div class="why">desired ${rupee(r.params.profit_goal)}, before charges</div></div>
+        <div><div class="k">Loss at stop</div><div class="v neg">${o.entered ? rupee(-o.qty * o.risk) : rupee(-r.params.max_loss)}</div><div class="why">${o.entered ? rupee(o.risk) + " a share × " + o.qty : "desired profit ÷ " + r.params.r}</div></div>
+        ${o.net != null ? `<div><div class="k">Exit</div><div class="v">${rupee(o.exit_price)}</div><div class="why">${esc(o.exit_time)} · charges ${rupee(o.charges)}</div></div>` : ""}
+      </div>
+      ${o.entered && o.qty * Math.abs(o.target - o.entry) < 0.9 * r.params.profit_goal ? `<div class="note"><b>Note:</b> your budget limits this trade to ${o.qty} shares, so the target makes ${rupee(o.qty * Math.abs(o.target - o.entry))} instead of ${rupee(r.params.profit_goal)}. Raise the budget or lower the desired profit.</div>` : ""}
+      <div id="pchart"></div>
+      ${pk.history && pk.history.fired ? `<div class="note">Same rule on ${esc(pk.symbol)}'s last ${pk.history.sessions} sessions: fired ${pk.history.fired} times, ${pk.history.wins} ended up, average ${pk.history.avg_r >= 0 ? "+" : ""}${pk.history.avg_r}R (${Object.entries(pk.history.exits).map(([k, v]) => v + " " + k).join(", ")}).</div>` : ""}
+      <div class="note">Paper trade: Money does not place orders. In Zerodha this is an intraday (MIS) ${buy ? "buy" : "short sell"}; place the stop-loss and target orders yourself and cancel the other when one fills.</div>
+    </div>`;
+  }
+  if (r.shortlist.length) {
+    h += `<div class="card"><h2>Shortlist (${r.shortlist.length})</h2><table><tr><th>Stock</th><th>Side</th><th class="n">Move</th><th class="n">Score</th><th>Why</th></tr>` +
+      r.shortlist.map(c => `<tr class="${pk && c.symbol === pk.symbol ? "pickrow" : ""}"><td><b>${esc(c.symbol)}</b><div class="why">${esc(r.names[c.symbol] || "")}</div></td><td>${c.side === "buy" ? "BUY" : "SHORT"}</td><td class="n ${c.move_pct >= 0 ? "pos" : "neg"}">${pct(c.move_pct)}<div class="why">${r.params.basis === "open" ? "9:15→10:15" : "vs yesterday"}</div></td><td class="n">${c.score}</td><td class="why">${c.skip ? "<i>skipped: " + esc(c.skip) + "</i>" : esc(c.why.join(" · "))}</td></tr>`).join("") + `</table></div>`;
+  } else if (!r.note && r.window) h += `<div class="card">No stock was 1% to 3% on yesterday with a chart score of 80+ and its ${w0}–${w1} hour moving with the market.</div>`;
+  else if (!r.note) h += `<div class="card">No stock moved ${r.params.min_move}% to ${r.params.max_move}% ${r.params.basis === "open" ? "between 9:15 and 10:15" : "from yesterday's close by 10:15"} in the market's direction.</div>`;
+  $("#today").innerHTML = h;
+  if (pk && pk.bars.length) priceChart($("#pchart"), Object.assign(pk, {win: [w0, w1]}));
+}
+
+/* ---- charts: hand-built SVG, one series each, recessive grid, hover tooltip ---- */
+function priceChart(el, pk) {
+  const bars = pk.bars, o = pk.outcome, pl = pk.plan;
+  const W = Math.max(320, el.clientWidth || 700), H = 260, L = 58, R = 92, T = 12, B = 26;
+  const levels = [{v: pl.trigger, n: "Trigger", c: "var(--level)"}, {v: o.entered ? o.stop : pl.stop, n: "Stop", c: "var(--critical)"}];
+  if (o.entered && o.target) levels.push({v: o.target, n: "Target", c: "var(--good)"});
+  else if (pl.target) levels.push({v: pl.target, n: "Target", c: "var(--good)"});
+  const vals = bars.flatMap(b => [b.h, b.l]).concat(levels.map(l => l.v));
+  let lo = Math.min(...vals), hi = Math.max(...vals); const pad = (hi - lo) * 0.06 || 1; lo -= pad; hi += pad;
+  const x = i => L + (W - L - R) * (i / Math.max(1, bars.length - 1)), y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+  let s = `<svg width="${W}" height="${H}" role="img" aria-label="${esc(pk.symbol)} 5-minute closes with trigger, stop and target">`;
+  for (let k = 0; k <= 4; k++) { const v = lo + (hi - lo) * k / 4; s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v.toFixed(2)}</text>`; }
+  bars.forEach((b, i) => { if (b.t.endsWith(":15") && ["09", "10", "11", "12", "13", "14", "15"].includes(b.t.slice(0, 2))) s += `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${b.t}</text>`; });
+  const [wa, wb] = pk.win || ["09:15", "10:15"], wA = Math.max(0, bars.findIndex(b => b.t >= wa)), fhEnd = bars.findIndex(b => b.t >= wb);
+  if (fhEnd > 0) s += `<rect x="${x(wA)}" y="${T}" width="${x(fhEnd) - x(wA)}" height="${H - T - B}" fill="var(--grid)" opacity=".55"/><text x="${x(wA) + 4}" y="${T + 12}">${wa === "09:15" ? "first hour" : wa + "–" + wb}</text>`;
+  levels.forEach(l => s += `<line x1="${L}" x2="${W - R}" y1="${y(l.v)}" y2="${y(l.v)}" stroke="${l.c}" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W - R + 6}" y="${y(l.v) + 4}" style="fill:var(--text-primary)">${l.n} ${l.v.toFixed(2)}</text>`);
+  s += `<polyline fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" points="${bars.map((b, i) => x(i) + "," + y(b.c)).join(" ")}"/>`;
+  const mark = (t, v, lab) => { const i = bars.findIndex(b => b.t >= t); if (i < 0) return ""; return `<circle cx="${x(i)}" cy="${y(v)}" r="5" fill="var(--surface-1)" stroke="var(--text-primary)" stroke-width="2"/><text x="${x(i)}" y="${y(v) - 9}" text-anchor="middle" style="fill:var(--text-primary);font-weight:600">${lab}</text>`; };
+  const t24 = s12 => { if (!s12) return null; const m = s12.match(/(\d+):(\d+) (AM|PM)/); let h = +m[1] % 12 + (m[3] === "PM" ? 12 : 0); return String(h).padStart(2, "0") + ":" + m[2]; };
+  if (o.entered) {
+    const et = t24(o.entry_time), eb = bars.findIndex(b => b.t >= et);
+    s += mark(bars[Math.max(0, eb - 1)]?.t || et, o.entry, "Entry");
+    if (o.exit_price != null) s += mark(t24(o.exit_time), o.exit_price, "Exit");
+  }
+  s += `<line id="xh" y1="${T}" y2="${H - B}" stroke="var(--text-muted)" visibility="hidden"/><rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent" id="hit"/></svg>`;
+  el.innerHTML = s;
+  const hit = el.querySelector("#hit"), xh = el.querySelector("#xh");
+  hit.onmousemove = e => { const r = hit.getBoundingClientRect(); const i = Math.round((e.clientX - r.left) / r.width * (bars.length - 1)); const b = bars[Math.max(0, Math.min(bars.length - 1, i))];
+    xh.setAttribute("x1", x(i)); xh.setAttribute("x2", x(i)); xh.setAttribute("visibility", "visible");
+    showTip(e, `<b>${b.t}</b> close ${rupee(b.c)}<br>high ${b.h.toFixed(2)} · low ${b.l.toFixed(2)}<br>volume ${b.v.toLocaleString("en-IN")}`); };
+  hit.onmouseleave = () => { hideTip(); xh.setAttribute("visibility", "hidden"); };
+}
+
+function niceStep(span) {
+  const raw = Math.max(span, 1) / 4, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+}
+function equityChart(el, trades) {
+  const W = Math.max(320, el.clientWidth || 700), H = 230, L = 70, R = 16, T = 12, B = 26;
+  let eq = 0; const pts = [{d: "start", v: 0}].concat(trades.map(t => ({d: t.date, v: (eq += t.net), t})));
+  const lo = Math.min(0, ...pts.map(p => p.v)), hi = Math.max(0, ...pts.map(p => p.v)) || 1;
+  const x = i => L + (W - L - R) * i / Math.max(1, pts.length - 1), y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo || 1));
+  let s = `<svg width="${W}" height="${H}" role="img" aria-label="Cumulative net profit">`;
+  const st = niceStep(hi - lo);
+  for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-6; v += st) s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${(v < 0 ? "−" : "") + "₹" + Math.abs(v).toLocaleString("en-IN")}</text>`;
+  s += `<line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--level)"/>`;
+  [[1, "start"], [Math.floor(pts.length / 2), "middle"], [pts.length - 1, "end"]].forEach(([i, a]) => { if (pts[i]) s += `<text x="${x(i)}" y="${H - 8}" text-anchor="${a}">${pts[i].d}</text>`; });
+  s += `<polyline fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" points="${pts.map((p, i) => x(i) + "," + y(p.v)).join(" ")}"/>`;
+  const last = pts[pts.length - 1];
+  s += `<circle cx="${x(pts.length - 1)}" cy="${y(last.v)}" r="4" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/>`;
+  s += `<line id="xh2" y1="${T}" y2="${H - B}" stroke="var(--text-muted)" visibility="hidden"/><rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent" id="hit2"/></svg>`;
+  el.innerHTML = s;
+  const hit = el.querySelector("#hit2"), xh = el.querySelector("#xh2");
+  hit.onmousemove = e => { const r = hit.getBoundingClientRect(); const i = Math.max(0, Math.min(pts.length - 1, Math.round((e.clientX - r.left) / r.width * (pts.length - 1)))); const p = pts[i];
+    xh.setAttribute("x1", x(i)); xh.setAttribute("x2", x(i)); xh.setAttribute("visibility", "visible");
+    showTip(e, p.t ? `<b>${p.d}</b> ${esc(p.t.symbol)} ${p.t.side === "buy" ? "BUY" : "SHORT"}<br>trade ${rupee(p.t.net, true)} · total ${rupee(p.v, true)}` : "Start"); };
+  hit.onmouseleave = () => { hideTip(); xh.setAttribute("visibility", "hidden"); };
+}
+
+function monthChart(el, months) {
+  const W = Math.max(320, el.clientWidth || 700), H = 210, L = 64, R = 10, T = 18, B = 26;
+  const vals = months.map(m => m.net), lo = Math.min(0, ...vals), hi = Math.max(0, ...vals) || 1;
+  const y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo || 1)), bw = (W - L - R) / months.length;
+  let s = `<svg width="${W}" height="${H}" role="img" aria-label="Net profit by month">`;
+  const step = niceStep(hi - lo);
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-6; v += step) s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${(v < 0 ? "−" : "") + "₹" + Math.abs(v).toLocaleString("en-IN")}</text>`;
+  months.forEach((m, i) => {
+    const x0 = L + i * bw + 2, w = Math.max(4, bw - 4), y0 = y(Math.max(0, m.net)), h = Math.max(1, Math.abs(y(m.net) - y(0)));
+    s += `<rect class="mb" data-i="${i}" x="${x0}" y="${y0}" width="${w}" height="${h}" rx="3" fill="${m.net >= 0 ? "var(--good)" : "var(--critical)"}"/>`;
+    if (months.length <= 14) s += `<text x="${x0 + w / 2}" y="${H - 8}" text-anchor="middle">${m.month.slice(2)}</text>`;
+  });
+  s += `<line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--level)"/></svg>`;
+  el.innerHTML = s;
+  el.querySelectorAll(".mb").forEach(r => { const m = months[+r.dataset.i];
+    r.onmousemove = e => showTip(e, `<b>${m.month}</b><br>${m.trades} trades, ${m.wins} won<br>net ${rupee(m.net, true)}`); r.onmouseleave = hideTip; });
+}
+
+function renderBacktest(r) {
+  const s = r.summary;
+  if (!s.trades) { $("#btout").innerHTML = `<div class="card">No trades in this period with these settings.</div>`; return; }
+  const ex = s.exits || {};
+  let h = `<div class="card"><h2>${esc(r.from)} to ${esc(r.to)} · ${s.days} sessions · ${r.stocks} stocks · ${esc(r.bars)} bars · mode ${esc($("#mode").selectedOptions[0].text)}</h2>
+    <div class="tiles">
+      <div class="tile"><div class="k">Accuracy (win rate)</div><div class="v">${s.win_rate}%</div><div class="s">trades that made money after charges</div></div>
+      <div class="tile"><div class="k">Net after charges</div><div class="v ${s.net >= 0 ? "pos" : "neg"}">${rupee(s.net, true)}</div><div class="s">on a ${rupee(+$("#budget").value)} account</div></div>
+      <div class="tile"><div class="k">Trades</div><div class="v">${s.trades}</div><div class="s">${ex.target || 0} target · ${ex.stop || 0} stop · ${(ex.time || 0)} time${ex.breakeven ? " · " + ex.breakeven + " breakeven" : ""}</div></div>
+      <div class="tile"><div class="k">Profit factor</div><div class="v">${s.profit_factor ?? "–"}</div><div class="s">₹ won ÷ ₹ lost (over 1 = profitable)</div></div>
+      <div class="tile"><div class="k">Average win / loss</div><div class="v" style="font-size:17px"><span class="pos">${rupee(s.avg_win)}</span> / <span class="neg">${rupee(s.avg_loss)}</span></div></div>
+      <div class="tile"><div class="k">Worst drawdown</div><div class="v neg">${rupee(-s.max_drawdown)}</div><div class="s">largest fall from a high</div></div>
+    </div></div>
+    <div class="grid2"><div class="card"><h2>Cumulative net profit</h2><div id="eq"></div></div><div class="card"><h2>Net profit by month</h2><div id="mo"></div>
+      <div class="note">${r.months.filter(m => m.net >= 0).length} of ${r.months.length} months profitable.</div></div></div>
+    <div class="card"><details><summary>All ${r.trades.length} trades (table)</summary><table><tr><th>Date</th><th>Market</th><th>Stock</th><th>Side</th><th>Entry</th><th class="n">Price</th><th>Exit</th><th class="n">Price</th><th class="n">Qty</th><th class="n">R</th><th class="n">Net</th></tr>` +
+    r.trades.map(t => `<tr><td>${t.date}</td><td>${t.bias}</td><td><b>${esc(t.symbol)}</b></td><td>${t.side === "buy" ? "BUY" : "SHORT"}</td><td>${esc(t.entry_time)}</td><td class="n">${t.entry.toFixed(2)}</td><td>${esc(t.exit)} ${esc(t.exit_time || "")}</td><td class="n">${t.exit_price.toFixed(2)}</td><td class="n">${t.qty}</td><td class="n">${t.r >= 0 ? "+" : ""}${t.r.toFixed(2)}</td><td class="n ${t.net >= 0 ? "pos" : "neg"}">${rupee(t.net, true)}</td></tr>`).join("") +
+    `</table></details>
+    <div class="note">${r.bars === "1-hour" ? "The 12-month test uses 1-hour bars (free 5-minute data only reaches back 60 days), so entries can come up to an hour later than live. " : ""}Past results on free data. They show how the rules behaved, not what they will do.</div></div>`;
+  $("#btout").innerHTML = h;
+  equityChart($("#eq"), r.trades); monthChart($("#mo"), r.months);
+}
+</script>
+</body>
+</html>
