@@ -1,0 +1,21 @@
+# Money on Render's free plan. Render reads this file when you create a "Blueprint" from your GitHub repo.
+services:
+  - type: web
+    name: money-intraday
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: "echo Money uses only the Python standard library"
+    startCommand: "python3 money.py serve --no-browser"
+    healthCheckPath: /healthz
+    envVars:
+      - key: MONEY_PASSWORD      # the password your phone's browser asks for (you choose it in Render)
+        sync: false
+      - key: MONEY_NTFY          # your ntfy topic for phone push alerts (a hard-to-guess name)
+        sync: false
+      - key: UPSTOX_TOKEN        # optional: Upstox Analytics Token for live tick prices
+        sync: false
+      - key: MONEY_PROFIT        # optional: desired profit per trade (default 1000)
+        sync: false
+      - key: MONEY_BUDGET        # optional: budget (default 50000)
+        sync: false
